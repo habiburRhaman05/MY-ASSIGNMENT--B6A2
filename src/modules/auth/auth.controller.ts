@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { signInService, signupService } from "../services/auth/auth-services";
+import { userServices } from "./auth.service";
 
-export const signupController = async (
+const signupController = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -10,7 +10,13 @@ export const signupController = async (
     const { name, email, password, phone, role } = req.body;
 
     // Call service layer to create the user
-    const user = await signupService({ name, email, password, phone, role });
+    const user = await userServices.signupService({
+      name,
+      email,
+      password,
+      phone,
+      role,
+    });
 
     if (user && user.name) {
       res.status(201).json({
@@ -30,7 +36,7 @@ export const signupController = async (
   }
 };
 
-export const signInController = async (
+const signInController = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -39,7 +45,7 @@ export const signInController = async (
     const { email, password } = req.body;
 
     // Call service layer to create the user
-    const result = await signInService({ email, password });
+    const result = await userServices.signInService({ email, password });
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -48,4 +54,9 @@ export const signInController = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const authControllers = {
+  signInController,
+  signupController,
 };

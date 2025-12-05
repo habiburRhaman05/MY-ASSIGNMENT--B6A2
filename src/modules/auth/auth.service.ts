@@ -2,9 +2,9 @@ import { pool } from "../../config/db";
 import { UserType } from "../../interfaces/user.type";
 import bcrypt from "bcrypt";
 import { ApiError } from "../../utils/ApiError";
-import { generateToken } from "../../utils/generateToken";
+import jwt, { SignOptions } from "jsonwebtoken";
 
-export const signupService = async (userData: UserType) => {
+const signupService = async (userData: UserType) => {
   try {
     const { name, email, password, phone, role } = userData;
 
@@ -34,10 +34,7 @@ export const signupService = async (userData: UserType) => {
     throw error;
   }
 };
-export const signInService = async (userData: {
-  email: string;
-  password: string;
-}) => {
+const signInService = async (userData: { email: string; password: string }) => {
   try {
     const { email, password } = userData;
 
@@ -75,4 +72,30 @@ export const signInService = async (userData: {
   } catch (error) {
     throw error;
   }
+};
+
+const generateToken = (
+  userData: UserType,
+  expiresIn: any,
+  jwt_secret: string
+): string => {
+  const payload = {
+    id: userData.id,
+    name: userData.name,
+    email: userData.email,
+    role: userData.role,
+  };
+
+  const options: SignOptions = { expiresIn };
+
+  // TypeScript now accepts JWT_SECRET as Secret
+  const token = jwt.sign(payload, jwt_secret, options);
+
+  return token;
+};
+
+export const userServices = {
+  signInService,
+  signupService,
+  generateToken,
 };
