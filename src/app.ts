@@ -16,7 +16,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Welcome to the show");
+  res.send("Welcome to the MY ASSIGNMENT 2 - B6A2");
 });
 
 // GLOBAL ROUTES
