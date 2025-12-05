@@ -1,90 +1,158 @@
-// import { ApiError } from "../../utils/ApiError";
-// import * as vehicleModel from "../../models/vehicleModel";
-// import * as userModel from "../../models/userModel";
-// import { Vehicle } from "../../interfaces/vehicles.type";
+import { pool } from "../../config/db";
+import { ApiError } from "../../utils/ApiError";
+import { Vehicle } from "./vehicles.type";
 
-// export const createVehicle = async (data: Vehicle, userId: number) => {
-//   const user = await userModel.findUserById(userId);
-//   if (!user) throw new ApiError(404, "User not found");
+const createVehicleServices = async (data: Vehicle) => {
+  try {
+    const {
+      vehicle_name,
+      registration_number,
+      availability_status,
+      type,
+      daily_rent_price,
+    } = data;
+    const existingVehicle = await pool.query(
+      `
 
-//   if (user.role !== "admin")
-//     throw new ApiError(403, "Only admins can add vehicles");
+        SELECT * FROM vehicles WHERE registration_number = $1
+        `,
+      [registration_number]
+    );
 
-//   const exists = await vehicleModel.findByRegistration(
-//     data.registration_number
-//   );
-//   if (exists)
-//     throw new ApiError(
-//       400,
-//       "Vehicle already exists with this registration number"
-//     );
+    if (existingVehicle.rows.length > 0) {
+      throw new ApiError(
+        `Another vehicle is already exist with this  registration_number - ${registration_number}`,
+        400
+      );
+    }
+    const result = await pool.query(
+      `
+        INSERT INTO vehicles( vehicle_name, registration_number,availability_status,type,daily_rent_price)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+        `,
+      [
+        vehicle_name,
+        registration_number,
+        availability_status,
+        type,
+        daily_rent_price,
+      ]
+    );
+    return result.rows[0];
+  } catch (error) {
+    throw error;
+  }
+};
 
-//   const created = await vehicleModel.createVehicle(data);
+const getAllVehiclesData = async () => {
+  try {
+    const result = await pool.query(`
+            SELECT * FROM vehicles
+            `);
+    return result.rows;
+  } catch (error) {
+    throw error;
+  }
+};
 
-//   return {
-//     success: true,
-//     message: "Vehicle created successfully",
-//     data: created,
-//   };
-// };
+const getVehicleDetails = async (vehicleId: number) => {
+  const vehicle = await pool.query(
+    `
+    SELECT * FROM vehicles WHERE id = $1
+    
+    `,
+    [vehicleId]
+  );
+  if (vehicle.rowCount === 0) throw new ApiError("Vehicle not found", 404);
 
-// export const getAllVehicles = async () => {
-//   const vehicles = await vehicleModel.getAllVehicles();
-//   return {
-//     success: true,
-//     data: vehicles,
-//   };
-// };
+  return vehicle;
+};
 
-// export const getVehicleById = async (id: number) => {
-//   const vehicle = await vehicleModel.getVehicleById(id);
-//   if (!vehicle) throw new ApiError(404, "Vehicle not found");
+export const updateVehicleDetails = async (
+  vehicleId: number,
+  updateData: Partial<Vehicle>
+) => {
+  try {
+    // 1. Check vehicle exists
+    const existingVehicle = await pool.query(
+      `SELECT * FROM vehicles WHERE id = $1`,
+      [vehicleId]
+    );
 
-//   return {
-//     success: true,
-//     data: vehicle,
-//   };
-// };
+    if (existingVehicle.rowCount === 0) {
+      throw new ApiError("Vehicle not found", 404);
+    }
 
-// export const updateVehicle = async (
-//   id: number,
-//   data: Partial<Vehicle>,
-//   userId: number
-// ) => {
-//   const user = await userModel.findUserById(userId);
-//   if (!user) throw new ApiError(404, "User not found");
+    // 2. Do not allow empty update
+    if (!updateData || Object.keys(updateData).length === 0) {
+      throw new ApiError("No update fields provided", 400);
+    }
 
-//   if (user.role !== "admin")
-//     throw new ApiError(403, "Only admins can update vehicles");
+    // 3. Valid fields that can be updated
+    const allowedFields = [
+      "vehicle_name",
+      "registration_number",
+      "availability_status",
+      "type",
+      "daily_rent_price",
+    ];
 
-//   const vehicle = await vehicleModel.getVehicleById(id);
-//   if (!vehicle) throw new ApiError(404, "Vehicle not found");
+    // 4. Filter fields coming from user
+    const updateKeys = Object.keys(updateData).filter((key) =>
+      allowedFields.includes(key)
+    );
 
-//   const updated = await vehicleModel.updateVehicle(id, data);
+    if (updateKeys.length === 0) {
+      throw new ApiError("Invalid field(s) provided", 400);
+    }
 
-//   return {
-//     success: true,
-//     message: "Vehicle updated successfully",
-//     data: updated,
-//   };
-// };
+    // 5. Dynamically build SET query
+    const setQuery = updateKeys
+      .map((key, index) => `${key} = $${index + 1}`)
+      .join(", ");
 
-// export const deleteVehicle = async (id: number, userId: number) => {
-//   const user = await userModel.findUserById(userId);
-//   if (!user) throw new ApiError(404, "User not found");
+    const values = updateKeys.map((key) => (updateData as any)[key]);
 
-//   if (user.role !== "admin")
-//     throw new ApiError(403, "Only admins can delete vehicles");
+    // 6. Execute dynamic update
+    const updated = await pool.query(
+      `
+        UPDATE vehicles
+        SET ${setQuery}
+        WHERE id = $${updateKeys.length + 1}
+        RETURNING *
+      `,
+      [...values, vehicleId]
+    );
 
-//   const vehicle = await vehicleModel.getVehicleById(id);
-//   if (!vehicle) throw new ApiError(404, "Vehicle not found");
+    return updated.rows[0];
+  } catch (error) {
+    throw error;
+  }
+};
 
-//   // Check active bookings here if needed (future: bookingModel)
+const deleteVehicle = async (vehicleId: number) => {
+  try {
+    const existing = await pool.query(`SELECT id FROM vehicles WHERE id = $1`, [
+      vehicleId,
+    ]);
 
-//   await vehicleModel.deleteVehicle(id);
+    if (existing.rowCount === 0) {
+      throw new ApiError("Vehicle not found", 404);
+    }
 
-//   return {
-//     success: true,
-//     message: "Vehicle deleted successfully",
-//   };
-// };
+    await pool.query(`DELETE FROM vehicles WHERE id = $1`, [vehicleId]);
+
+    return true; // Service returns TRUE if deletion succeeded
+  } catch (error) {
+    throw error; // MUST throw so controller can handle
+  }
+};
+
+export const vehiclesServices = {
+  createVehicleServices,
+  getAllVehiclesData,
+  getVehicleDetails,
+  updateVehicleDetails,
+  deleteVehicle,
+};

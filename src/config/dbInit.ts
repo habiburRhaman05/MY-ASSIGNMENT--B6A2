@@ -21,7 +21,7 @@ export const initializeTables = async () => {
         availability_status VARCHAR(10) CHECK (availability_status IN ('available','booked')) NOT NULL
       );
 
-      CREATE TABLE IF NOT EXISTS bookings (
+      CREATE TABLE IF NOT EXISTS Bookings (
         id SERIAL PRIMARY KEY,
         customer_id INTEGER REFERENCES users(id),
         vehicle_id INTEGER REFERENCES vehicles(id),

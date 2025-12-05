@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import _default from "./../../node_modules/pg-cloudflare/dist/empty.d";
 import { authRoutes } from "../modules/auth/auth.route";
+import { vehiclesRouter } from "../modules/vehicles/vehicles.route";
 
 export const router = Router();
 
@@ -13,6 +14,10 @@ const moduleRoutes = [
   {
     path: "/auth",
     route: authRoutes,
+  },
+  {
+    path: "/vehicles",
+    route: vehiclesRouter,
   },
 ];
 

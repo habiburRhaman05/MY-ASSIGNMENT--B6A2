@@ -94,8 +94,23 @@ const generateToken = (
   return token;
 };
 
-export const userServices = {
+const generateDecodedToken = async (
+  token: string,
+  secret: string
+): Promise<{ err: null | string; decoded: any }> => {
+  try {
+    const decoded = jwt.verify(token, secret);
+    console.log("decoded", decoded);
+
+    return { err: null, decoded };
+  } catch (error: any) {
+    return { err: error.message, decoded: null };
+  }
+};
+
+export const authServices = {
   signInService,
   signupService,
   generateToken,
+  generateDecodedToken,
 };

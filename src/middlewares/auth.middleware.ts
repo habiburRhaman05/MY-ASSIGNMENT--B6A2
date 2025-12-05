@@ -1,34 +1,36 @@
-import { NextFunction, Request, Response } from 'express';
-import { verifyToken } from '../utils/jwt';
-import { JwtPayload } from 'jsonwebtoken';
-import AppError from '../errorHelpers/AppError';
-import httpStatus from 'http-status-codes';
-import env from '../config/env';
+import { Request, Response, NextFunction } from "express";
+import { ApiError } from "../utils/ApiError";
+import { authServices } from "../modules/auth/auth.service";
 
-export const checkAuth =
-  (...restRole: string[]) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+export interface AuthRequest extends Request {
+  user?: { id: number; email: string; role: string };
+}
+
+export const authorize =
+  (roles: string[]) =>
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const accessToken = req.headers.authorization;
-      const verifyUser = verifyToken( accessToken as string, env.JWT_SECRET ) as JwtPayload;
+      const JWT_SECRET = process.env.JWT_SECRET;
+      if (!JWT_SECRET) throw new ApiError("JWT secret missing", 500);
 
-      /*
-      ----------------------------------------------------------------
-      // More checking will be execute here based on application need
-      ----------------------------------------------------------------
-      */
+      const token = req.header("Authorization")?.replace("Bearer ", "");
+      if (!token) throw new ApiError("Unauthorized User", 401);
 
-       
-      // CHECK Verified
-      if (!verifyUser) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Not Authorized')
-      };
+      const { err, decoded } = await authServices.generateDecodedToken(
+        token,
+        JWT_SECRET
+      );
 
-      if (!restRole.includes(verifyUser.role)) {
-        throw new AppError( httpStatus.FORBIDDEN, 'You are not permitted to access this route')
-      };
+      if (err || !decoded) throw new ApiError("Token Invalid or Expired", 401);
 
-      req.user = verifyUser; // Set an global type for this line see on: interface > intex.d.ts
+      // attach user
+      // req.user = decoded
+
+      // check roles
+      if (!roles.includes(decoded.role)) {
+        return next(new ApiError("Forbidden: You don't have access", 403));
+      }
+
       next();
     } catch (error) {
       next(error);

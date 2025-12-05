@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { userServices } from "./auth.service";
+import { authServices } from "./auth.service";
 
 const signupController = async (
   req: Request,
@@ -10,7 +10,7 @@ const signupController = async (
     const { name, email, password, phone, role } = req.body;
 
     // Call service layer to create the user
-    const user = await userServices.signupService({
+    const user = await authServices.signupService({
       name,
       email,
       password,
@@ -45,7 +45,7 @@ const signInController = async (
     const { email, password } = req.body;
 
     // Call service layer to create the user
-    const result = await userServices.signInService({ email, password });
+    const result = await authServices.signInService({ email, password });
     res.status(200).json({
       success: true,
       message: "Login successful",

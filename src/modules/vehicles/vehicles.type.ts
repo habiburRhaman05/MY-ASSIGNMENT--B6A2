@@ -1,5 +1,5 @@
 export interface Vehicle {
-  id: number;
+  id?: number;
   vehicle_name: string;
   type: "car" | "bike" | "van" | "SUV";
   registration_number: string;
