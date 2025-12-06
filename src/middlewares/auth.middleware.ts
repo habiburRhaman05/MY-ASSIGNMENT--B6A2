@@ -2,37 +2,42 @@ import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError";
 import { authServices } from "../modules/auth/auth.service";
 
-export interface AuthRequest extends Request {
-  user?: { id: number; email: string; role: string };
-}
+export const authenticateToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader?.split(" ")[1];
 
-export const authorize =
-  (roles: string[]) =>
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    try {
-      const JWT_SECRET = process.env.JWT_SECRET;
-      if (!JWT_SECRET) throw new ApiError("JWT secret missing", 500);
+  if (!token)
+    return res.status(401).json({ error: " Unatohrize Token missing" });
 
-      const token = req.header("Authorization")?.replace("Bearer ", "");
-      if (!token) throw new ApiError("Unauthorized User", 401);
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) throw new ApiError("JWT secret missing", 500);
 
-      const { err, decoded } = await authServices.generateDecodedToken(
-        token,
-        JWT_SECRET
-      );
+  try {
+    const { err, decoded } = await authServices.verifyToken(token, JWT_SECRET);
 
-      if (err || !decoded) throw new ApiError("Token Invalid or Expired", 401);
+    if (err || !decoded) throw new ApiError("Token Invalid or Expired", 401);
 
-      // attach user
-      // req.user = decoded
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid or expired token" });
+  }
+};
 
-      // check roles
-      if (!roles.includes(decoded.role)) {
-        return next(new ApiError("Forbidden: You don't have access", 403));
-      }
+export const authorize = (roles: string[]) => {
+  return (req: any, res: Response, next: NextFunction) => {
+    const user = req.user;
+    console.log("user", user);
 
-      next();
-    } catch (error) {
-      next(error);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    if (!roles.includes(user.role)) {
+      return res.status(403).json({ error: "Forbidden: Access denied" });
     }
+
+    next();
   };
+};

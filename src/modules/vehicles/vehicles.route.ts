@@ -1,24 +1,27 @@
 import express, { RequestHandler } from "express";
 import { vehiclesController } from "./vehicles.controller";
-import { authorize } from "../../middlewares/auth.middleware";
+import {
+  authenticateToken,
+  authorize,
+} from "../../middlewares/auth.middleware";
 
 export const vehiclesRouter = express.Router();
 
 vehiclesRouter.post(
   "/",
-
-  authorize(["admin"]) as RequestHandler,
+  authenticateToken,
+  authorize(["admin"]),
   vehiclesController.createVehicles
 );
 vehiclesRouter.get("/", vehiclesController.getAllVehicles);
 vehiclesRouter.get("/:vehicleId", vehiclesController.getVehicleDetails);
 vehiclesRouter.delete(
   "/:vehicleId",
-  authorize(["admin"]) as RequestHandler,
+  authorize(["admin"]),
   vehiclesController.deleteVehicle
 );
 vehiclesRouter.put(
   "/:vehicleId",
-  authorize(["admin"]) as RequestHandler,
+  authorize(["admin"]),
   vehiclesController.updateVehicle
 );

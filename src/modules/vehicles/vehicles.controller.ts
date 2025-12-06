@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { vehiclesServices } from "./vehicle.service";
 
 const createVehicles = async (
@@ -7,28 +7,10 @@ const createVehicles = async (
   next: NextFunction
 ) => {
   try {
-    const {
-      vehicle_name,
-      type,
-      registration_number,
-      daily_rent_price,
-      availability_status,
-    } = req.body;
+    const newVehicle = await vehiclesServices.createVehicleServices(req.body);
 
-    // validate input
-
-    // result
-    const newVehicle = await vehiclesServices.createVehicleServices({
-      vehicle_name,
-      type,
-      registration_number,
-      daily_rent_price,
-      availability_status,
-    });
-
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
-
       message: "Vehicle created successfully",
       data: newVehicle,
     });
@@ -36,95 +18,80 @@ const createVehicles = async (
     next(error);
   }
 };
+
 const getAllVehicles = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // result
-    const allVehicles = await vehiclesServices.getAllVehiclesData();
-    if (allVehicles.length === 0) {
-      return res.json({
-        success: true,
-        message: "No vehicles found",
-        data: [],
-      });
-    }
+    const vehicles = await vehiclesServices.getAllVehiclesData();
 
-    return res.status(200).json({
+    res.json({
       success: true,
       message: "Vehicles retrieved successfully",
-      data: allVehicles,
+      data: vehicles,
     });
   } catch (error) {
     next(error);
   }
 };
+
 const getVehicleDetails = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const vehicleId = req.params.vehicleId;
-    // result
-    const vehicleInfo = await vehiclesServices.getVehicleDetails(
-      parseInt(vehicleId)
+    const vehicle = await vehiclesServices.getVehicleDetails(
+      Number(req.params.vehicleId)
     );
 
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Vehicles retrieved successfully",
-      data: vehicleInfo.rows[0],
+      message: "Vehicle retrieved successfully",
+      data: vehicle,
     });
   } catch (error) {
     next(error);
   }
 };
+
 const updateVehicle = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const vehicleId = req.params.vehicleId;
-
-    // result
-    const updatedVehicleData = await vehiclesServices.updateVehicleDetails(
-      parseInt(vehicleId),
+    const updated = await vehiclesServices.updateVehicleDetails(
+      Number(req.params.vehicleId),
       req.body
     );
-    return res.status(200).json({
+
+    res.json({
       success: true,
       message: "Vehicle updated successfully",
-      data: updatedVehicleData,
+      data: updated,
     });
   } catch (error) {
     next(error);
   }
 };
+
 const deleteVehicle = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const vehicleId = Number(req.params.vehicleId);
+  try {
+    await vehiclesServices.deleteVehicle(Number(req.params.vehicleId));
 
-  if (isNaN(vehicleId)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid vehicle ID",
-    });
-  }
-
-  const success = await vehiclesServices.deleteVehicle(vehicleId);
-
-  if (success) {
-    return res.status(200).json({
+    res.json({
       success: true,
       message: "Vehicle deleted successfully",
     });
+  } catch (error) {
+    next(error);
   }
 };
 
