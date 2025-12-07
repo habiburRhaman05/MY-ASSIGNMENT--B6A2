@@ -227,10 +227,11 @@ NO Contributing Allow Because this my Assignment Repo ;
 
 ---
 
-# 📞 Contact
+## 📢 Contact / Support
 
-# email devhabib2005@gmail.com
+If you face any issues accessing the **Live Deployment** or **GitHub Repository**, please feel free to contact me:
 
-# phone 01605746821
+- **Email:** [devhabib2005@gmail.com](mailto:devhabib2005@gmail.com)
+- **Phone / WhatsApp:** +8801605746821
 
 ---
