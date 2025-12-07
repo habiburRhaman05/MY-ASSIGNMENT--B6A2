@@ -150,7 +150,7 @@ const getAllBookingsData = async (userId: number, role: string) => {
     rent_start_date: formatDate(b.rent_start_date),
     rent_end_date: formatDate(b.rent_end_date),
     total_price: b.total_price,
-    status: b.status,
+    status: statusUpdateByEndDate(b.rent_end_date, b.status),
     vehicle: {
       vehicle_name: b.vehicle_name,
       registration_number: b.registration_number,
@@ -280,7 +280,10 @@ const statusUpdateByEndDate = (
 };
 
 const formatDate = (date: Date) => {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 export const bookingServices = {

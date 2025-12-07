@@ -10,21 +10,6 @@ const createBooking = async (
   try {
     const currentUser = req.user as { id: number; role: "admin" | "customer" };
 
-    // date validate
-    const rent_start_date = new Date(req.body.rent_start_date);
-    const currentDate = new Date();
-
-    // Remove time part for fair comparison
-    currentDate.setHours(0, 0, 0, 0);
-    rent_start_date.setHours(0, 0, 0, 0);
-
-    if (rent_start_date <= currentDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Rent start date must be after today",
-      });
-    }
-
     // Only admin or same customer can book
     if (
       currentUser.role !== "admin" &&
