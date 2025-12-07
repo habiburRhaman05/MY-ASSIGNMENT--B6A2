@@ -91,10 +91,18 @@ const updateVehicleDetails = async (
 };
 
 const deleteVehicle = async (vehicleId: number) => {
-  const exists = await pool.query(`SELECT id FROM vehicles WHERE id=$1`, [
-    vehicleId,
-  ]);
-  if (exists.rowCount === 0) throw new ApiError("Vehicle not found", 404);
+  const existVehicle = await pool.query(
+    `SELECT id,availability_status FROM vehicles WHERE id=$1 `,
+    [vehicleId]
+  );
+  const vehicle = existVehicle.rows[0];
+  if (existVehicle.rowCount === 0) throw new ApiError("Vehicle not found", 404);
+  if (vehicle.availability_status !== "available") {
+    throw new ApiError(
+      "the vehicle is currently booked by another customer",
+      400
+    );
+  }
 
   await pool.query(`DELETE FROM vehicles WHERE id=$1`, [vehicleId]);
   return true;

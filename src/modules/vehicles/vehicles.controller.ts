@@ -26,10 +26,13 @@ const getAllVehicles = async (
 ) => {
   try {
     const vehicles = await vehiclesServices.getAllVehiclesData();
-
+    const message =
+      vehicles.length > 0
+        ? "Vehicles retrieved successfully"
+        : "No vehicles found";
     res.json({
       success: true,
-      message: "Vehicles retrieved successfully",
+      message,
       data: vehicles,
     });
   } catch (error) {

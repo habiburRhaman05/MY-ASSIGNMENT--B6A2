@@ -4,6 +4,7 @@ import _default from "./../../node_modules/pg-cloudflare/dist/empty.d";
 import { authRoutes } from "../modules/auth/auth.route";
 import { vehiclesRouter } from "../modules/vehicles/vehicles.route";
 import { userRoutes } from "../modules/users/users.route";
+import { bookingRoutes } from "../modules/booking/booking.route";
 
 export const router = Router();
 
@@ -19,6 +20,10 @@ const moduleRoutes = [
   {
     path: "/vehicles",
     route: vehiclesRouter,
+  },
+  {
+    path: "/bookings",
+    route: bookingRoutes,
   },
 ];
 

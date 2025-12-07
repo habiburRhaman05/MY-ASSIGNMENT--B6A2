@@ -81,8 +81,19 @@ export const updateUserService = async (
   return updated.rows[0];
 };
 
+const getUser = async (userId: number) => {
+  const user = await pool.query(
+    `
+      SELECT * FROM users WHERE id = $1
+      `,
+    [userId]
+  );
+  return user;
+};
+
 export const usersServices = {
   getAllUsers,
   deleteUser,
   updateUserService,
+  getUser,
 };

@@ -25,7 +25,9 @@ const signupService = async (userData: UserType) => {
     throw new ApiError("Email already exists", 400);
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const salt = 10;
+
+  const hashedPassword = await bcrypt.hash(password, salt);
 
   const query = `
       INSERT INTO users (name, email, password, phone, role)

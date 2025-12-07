@@ -14,10 +14,10 @@ userRoutes.get(
   usersController.getAllUsers
 );
 userRoutes.delete(
-  "/",
+  "/:userId",
   authenticateToken,
   authorize(["admin"]),
-  usersController.getAllUsers
+  usersController.deleteUser
 );
 
 userRoutes.put(

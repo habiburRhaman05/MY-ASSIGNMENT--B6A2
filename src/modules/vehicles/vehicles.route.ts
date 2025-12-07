@@ -17,11 +17,15 @@ vehiclesRouter.get("/", vehiclesController.getAllVehicles);
 vehiclesRouter.get("/:vehicleId", vehiclesController.getVehicleDetails);
 vehiclesRouter.delete(
   "/:vehicleId",
+  authenticateToken,
+
   authorize(["admin"]),
   vehiclesController.deleteVehicle
 );
 vehiclesRouter.put(
   "/:vehicleId",
+  authenticateToken,
+
   authorize(["admin"]),
   vehiclesController.updateVehicle
 );

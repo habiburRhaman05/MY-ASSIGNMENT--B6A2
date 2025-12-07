@@ -31,7 +31,6 @@ export const authenticateToken = async (
 export const authorize = (roles: string[]) => {
   return (req: any, res: Response, next: NextFunction) => {
     const user = req.user;
-    console.log("user", user);
 
     if (!user) return res.status(401).json({ error: "Unauthorized" });
     if (!roles.includes(user.role)) {
