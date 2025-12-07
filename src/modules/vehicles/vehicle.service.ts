@@ -27,6 +27,7 @@ const createVehicleServices = async (data: Vehicle) => {
     `
       INSERT INTO vehicles (vehicle_name, registration_number, availability_status, type, daily_rent_price)
       VALUES ($1,$2,$3,$4,$5)
+      ON CONFLICT DO NOTHING
       RETURNING *
     `,
     [
@@ -91,20 +92,31 @@ const updateVehicleDetails = async (
 };
 
 const deleteVehicle = async (vehicleId: number) => {
+  // check exist vehicle
+
   const existVehicle = await pool.query(
-    `SELECT id,availability_status FROM vehicles WHERE id=$1 `,
+    `SELECT id, availability_status FROM vehicles WHERE id=$1`,
     [vehicleId]
   );
-  const vehicle = existVehicle.rows[0];
+
   if (existVehicle.rowCount === 0) throw new ApiError("Vehicle not found", 404);
-  if (vehicle.availability_status !== "available") {
+
+  // check active bookings
+  const activeBookings = await pool.query(
+    `SELECT id FROM bookings WHERE vehicle_id = $1 AND status = 'active'`,
+    [vehicleId]
+  );
+
+  if (activeBookings.rowCount !== 0) {
     throw new ApiError(
-      "the vehicle is currently booked by another customer",
+      "This vehicle currently has active bookings. You cannot delete it",
       400
     );
   }
 
-  await pool.query(`DELETE FROM vehicles WHERE id=$1`, [vehicleId]);
+  // soft delete (best approach)
+  await pool.query(`DELETE FROM vehicles WHERE id = $1`, [vehicleId]);
+
   return true;
 };
 

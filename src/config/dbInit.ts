@@ -24,7 +24,7 @@ export const initializeTables = async () => {
       CREATE TABLE IF NOT EXISTS Bookings (
         id SERIAL PRIMARY KEY,
         customer_id INTEGER REFERENCES users(id),
-        vehicle_id INTEGER REFERENCES vehicles(id),
+        vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE CASCADE,
         rent_start_date DATE NOT NULL,
         rent_end_date DATE NOT NULL,
         total_price NUMERIC CHECK (total_price > 0) NOT NULL,

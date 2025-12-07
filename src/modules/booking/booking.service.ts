@@ -45,7 +45,13 @@ const createBookingService = async (data: BookingType) => {
     [customer_id, vehicle_id, rent_start_date, rent_end_date, totalPrice]
   );
 
-  const booking = bookingRes.rows[0];
+  const booking = bookingRes.rows.map((item) => {
+    return {
+      ...item,
+      rent_start_date: formatDate(item.rent_start_date),
+      rent_end_date: formatDate(item.rent_end_date),
+    };
+  })[0];
 
   // 6️⃣ Update vehicle status → rented
   await pool.query(
@@ -68,7 +74,7 @@ const getAllBookingsData = async (userId: number, role: string) => {
     throw new ApiError("Invalid user", 404);
   }
 
-  // 2️⃣ Admin → See ALL bookings
+  //  Admin → See ALL bookings
   if (role === "admin") {
     const result = await pool.query(`
       SELECT 
@@ -98,8 +104,8 @@ const getAllBookingsData = async (userId: number, role: string) => {
       id: b.id,
       customer_id: b.customer_id,
       vehicle_id: b.vehicle_id,
-      rent_start_date: b.rent_start_date,
-      rent_end_date: b.rent_end_date,
+      rent_start_date: formatDate(b.rent_start_date),
+      rent_end_date: formatDate(b.rent_end_date),
       total_price: b.total_price,
       status: statusUpdateByEndDate(b.rent_end_date, b.status),
       customer: {
@@ -115,7 +121,7 @@ const getAllBookingsData = async (userId: number, role: string) => {
     return formatted;
   }
 
-  // 3️⃣ Customer → Only his bookings
+  //  Customer → Only his bookings
   const result = await pool.query(
     `
     SELECT 
@@ -141,8 +147,8 @@ const getAllBookingsData = async (userId: number, role: string) => {
   const formatted = result.rows.map((b) => ({
     id: b.id,
     vehicle_id: b.vehicle_id,
-    rent_start_date: b.rent_start_date,
-    rent_end_date: b.rent_end_date,
+    rent_start_date: formatDate(b.rent_start_date),
+    rent_end_date: formatDate(b.rent_end_date),
     total_price: b.total_price,
     status: b.status,
     vehicle: {
@@ -212,7 +218,7 @@ const updateBookingService = async (
   const updated = updatedBooking.rows[0];
 
   // If admin marks returned → vehicle becomes available
-  if (status === "returned" || status === "cancelled") {
+  if (status === "returned") {
     await pool.query(
       `UPDATE vehicles SET availability_status = 'available'
        WHERE id = $1`,
@@ -223,6 +229,18 @@ const updateBookingService = async (
     return {
       ...updated,
       vehicle: { availability_status: "available" },
+    };
+  }
+  if (status === "cancelled") {
+    await pool.query(
+      `UPDATE vehicles SET availability_status = 'available'
+       WHERE id = $1`,
+      [updated.vehicle_id]
+    );
+
+    // return assignment required output
+    return {
+      ...updated,
     };
   }
 
