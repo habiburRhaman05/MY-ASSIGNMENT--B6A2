@@ -74,6 +74,32 @@ const getAllBookingsData = async (userId: number, role: string) => {
     throw new ApiError("Invalid user", 404);
   }
 
+  // update status when rend_end_date pass
+  const now = new Date();
+
+  const updated = await pool.query(
+    `
+  UPDATE bookings
+  SET status = 'returned'
+  WHERE status = 'active'
+  AND rent_end_date < $1
+  RETURNING vehicle_id
+`,
+    [now]
+  );
+
+  // 2️⃣ Update only the vehicles from updated bookings
+  if (updated.rowCount !== 0) {
+    await pool.query(
+      `
+  UPDATE vehicles
+  SET availability_status = 'available'
+  WHERE id = ANY($1)
+`,
+      [updated.rows.map((b) => b.vehicle_id)]
+    );
+  }
+
   //  Admin → See ALL bookings
   if (role === "admin") {
     const result = await pool.query(`
@@ -99,7 +125,7 @@ const getAllBookingsData = async (userId: number, role: string) => {
       ORDER BY b.id DESC
     `);
 
-    // 👉 Transform result into required JSON shape
+    //formatted result into required JSON shape
     const formatted = result.rows.map((b) => ({
       id: b.id,
       customer_id: b.customer_id,
