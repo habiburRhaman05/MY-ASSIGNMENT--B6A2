@@ -129,8 +129,8 @@ Vehicle Rental System assignment Assignment-এ অনেক ফিচার ব
 ## 1️⃣ Clone the Repository
 
 ```bash
-git clone <your-repo-link>
-cd vehicle-rental-backend
+git clone https://github.com/habiburRhaman05/MY-ASSIGNMENT--B6A2
+cd MY-ASSIGNMENT--B6A2
 ```
 
 ## 2️⃣ Install Dependencies
